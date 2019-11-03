@@ -5,13 +5,13 @@ import os
 
 np.random.seed(2)
 
-path_2p = 'images_bad/2p'
+path_2p = 'images/2p'
 all_2ps = [ os.path.join(path_2p, f) for f in os.listdir(path_2p) ]
 np.random.shuffle(all_2ps)
 train_2ps = all_2ps[30:]
 test_2p = all_2ps[:30]
 
-path_2pounds = 'images_bad/2pound'
+path_2pounds = 'images/2pound'
 all_2pounds = [ os.path.join(path_2pounds, f) for f in os.listdir(path_2pounds) ]
 np.random.shuffle(all_2pounds)
 train_2pounds = all_2pounds[20:]
@@ -66,8 +66,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 clf = svm.SVC()
-clf = RandomForestClassifier()
-clf = MLPClassifier()
+# clf = RandomForestClassifier()
+# clf = MLPClassifier()
 # clf = svm()
 clf.fit(X, y)  
 
@@ -81,14 +81,43 @@ def predict(img):
         return '2pound'
 
 
+def loo(data):
+    # nj
+    n_samples = data.shape[0]
+    correct = 0
+
+    for i in range(n_samples):
+        test = data[i]
+        train = np.delete(data, i, axis=0)
+        np.random.shuffle(train)
+        # clf = RandomForestClassifier(n_estimators=10)
+        clf = svm.SVC(gamma='scale')
+        clf.fit(train[:, :-1], train[:, -1])
+
+        guess = clf.predict([test[:-1]])
+        print(guess, test[-1])
+        correct += test[-1] == guess
+    
+    print('Correct: ', correct)
+    return correct / n_samples
+
+# print(all_2ps[0], all_2pounds[0])
+
+data = np.vstack((
+    [ np.append(get_features(f), 0) for f in all_2ps ],
+    [ np.append(get_features(f), 1) for f in all_2pounds ]
+))
+
+np.random.shuffle(data)
+print(loo(data))
+
+# # print(clf.predict(test))
+# test = np.array([ get_features(f) for f in test_2pounds ])
 
 # print(clf.predict(test))
-test = np.array([ get_features(f) for f in test_2pounds ])
 
-print(clf.predict(test))
+# test = np.array([ get_features(f) for f in test_2p ])
 
-test = np.array([ get_features(f) for f in test_2p ])
-
-print(clf.predict(test))
+# print(clf.predict(test))
 
 
