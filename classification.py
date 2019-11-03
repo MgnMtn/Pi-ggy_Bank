@@ -8,14 +8,14 @@ np.random.seed(2)
 path_2p = 'images/2p'
 all_2ps = [ os.path.join(path_2p, f) for f in os.listdir(path_2p) ]
 np.random.shuffle(all_2ps)
-train_2ps = all_2ps[10:]
-test_2p = all_2ps[:10]
+train_2ps = all_2ps[20:]
+test_2p = all_2ps[:20]
 
-path_2pounds = 'images/2pound'
+path_2pounds = 'images/10p'
 all_2pounds = [ os.path.join(path_2pounds, f) for f in os.listdir(path_2pounds) ]
 np.random.shuffle(all_2pounds)
-train_2pounds = all_2pounds[10:]
-test_2pounds = all_2pounds[:10]
+train_2pounds = all_2pounds[20:]
+test_2pounds = all_2pounds[:20]
 
 def get_features(image_src):
     if type(image_src) is str:
@@ -26,7 +26,7 @@ def get_features(image_src):
         print('Could not open or find the image:', image_src)
         exit(0)
     bgr_planes = cv.split(src)
-    histSize = 15
+    histSize = 25
     histRange = (0, 256) # the upper boundary is exclusive
     accumulate = True
     b_hist = cv.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
@@ -64,6 +64,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 clf = svm.SVC()
 clf = RandomForestClassifier()
+# clf = svm()
 clf.fit(X, y)  
 
 def predict(img):
