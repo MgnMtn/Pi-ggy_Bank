@@ -8,14 +8,14 @@ np.random.seed(2)
 path_2p = 'images/2p'
 all_2ps = [ os.path.join(path_2p, f) for f in os.listdir(path_2p) ]
 np.random.shuffle(all_2ps)
-train_2ps = all_2ps[10:]
-test_2p = all_2ps[:10]
+train_2ps = all_2ps[30:]
+test_2p = all_2ps[:30]
 
 path_2pounds = 'images/2pound'
 all_2pounds = [ os.path.join(path_2pounds, f) for f in os.listdir(path_2pounds) ]
 np.random.shuffle(all_2pounds)
-train_2pounds = all_2pounds[10:]
-test_2pounds = all_2pounds[:10]
+train_2pounds = all_2pounds[20:]
+test_2pounds = all_2pounds[:20]
 
 def get_features(image_src):
     if type(image_src) is str:
@@ -26,7 +26,7 @@ def get_features(image_src):
         print('Could not open or find the image:', image_src)
         exit(0)
     bgr_planes = cv.split(src)
-    histSize = 15
+    histSize = 30
     histRange = (0, 256) # the upper boundary is exclusive
     accumulate = True
     b_hist = cv.calcHist(bgr_planes, [0], None, [histSize], histRange, accumulate=accumulate)
@@ -51,7 +51,10 @@ def shuffle_along_axis(a, axis):
     idx = np.random.rand(*a.shape).argsort(axis=axis)
     return np.take_along_axis(a,idx,axis=axis)
 
-training = shuffle_along_axis(np.vstack((train_2pounds, train_2ps)), axis=0)
+# training = shuffle_along_axis(np.vstack((train_2pounds, train_2ps)), axis=0)
+
+training = np.vstack((train_2pounds, train_2ps))
+np.random.shuffle(training)
 
 X = training[:, :-1]
 y = training[:, -1]
@@ -59,11 +62,13 @@ y = training[:, -1]
 test = np.array([ get_features(f) for f in test_2p ])
 
 from sklearn import svm
-
+from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 clf = svm.SVC()
-clf = RandomForestClassifier()
+# clf = RandomForestClassifier()
+# clf = MLPClassifier()
+# clf = svm()
 clf.fit(X, y)  
 
 def predict(img):
@@ -76,25 +81,43 @@ def predict(img):
         return '2pound'
 
 
+def loo(data):
+    # nj
+    n_samples = data.shape[0]
+    correct = 0
+
+    for i in range(n_samples):
+        test = data[i]
+        train = np.delete(data, i, axis=0)
+        np.random.shuffle(train)
+        # clf = RandomForestClassifier(n_estimators=10)
+        clf = svm.SVC(gamma='scale')
+        clf.fit(train[:, :-1], train[:, -1])
+
+        guess = clf.predict([test[:-1]])
+        print(guess, test[-1])
+        correct += test[-1] == guess
+    
+    print('Correct: ', correct)
+    return correct / n_samples
+
+# print(all_2ps[0], all_2pounds[0])
+
+data = np.vstack((
+    [ np.append(get_features(f), 0) for f in all_2ps ],
+    [ np.append(get_features(f), 1) for f in all_2pounds ]
+))
+
+np.random.shuffle(data)
+print(loo(data))
+
+# # print(clf.predict(test))
+# test = np.array([ get_features(f) for f in test_2pounds ])
 
 # print(clf.predict(test))
 
-test = np.array([ get_features(f) for f in test_2pounds ])
+# test = np.array([ get_features(f) for f in test_2p ])
 
-print(clf.predict(test))
+# print(clf.predict(test))
 
-test = np.array([ get_features(f) for f in test_2p ])
-
-print(clf.predict(test))
-
-# print(X.shape, y.shape)
-# print(training.shape)
-# njnj
-
-
-# from sklearn import svm
-# X = [[0, 0], [1, 1]]
-# y = [0, 1]
-# clf = svm.SVC(gamma='scale')
-# clf.fit(X, y)  
 

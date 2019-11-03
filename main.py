@@ -11,6 +11,23 @@ count = float('inf')
 file = open('file.txt', 'w+')
 
 def mode(list):
+
+    twop = 0
+    twopound = 0
+
+    for item in list:
+        if item == '2p':
+            twop += 1
+        else:
+            twopound += 1
+    
+    total = twop + twopound
+
+    if (twopound/total) > 0.35:
+        return '2pound'
+    else:
+        return '2p'
+
     return max(set(list), key=list.count)
 
 def save_keypoints(keypoints, frame):
@@ -26,6 +43,9 @@ def save_keypoints(keypoints, frame):
             int(x)-int(size//2):int(x)+int(size//2),
         ]
 
+        # cv2.imwrite('images/%s.png' % (random.getrandbits(128)), frame)
+
+
         if frame.shape[0]:
             decisions.append(predict(frame))
     print(decisions)
@@ -35,12 +55,18 @@ def save_keypoints(keypoints, frame):
 
         # print(predict(frame))
 
-        # cv2.imwrite('images/%s.png' % (random.getrandbits(128)), frame)
-
 while(True):
     # Capture frame-by-frame
     ret, im = cap.read()
-    cv2.imshow('frame', im)
+
+    # lab = cv2.cvtColor(im, cv2.COLOR_BGR2LAB)
+    # lab_planes = cv2.split(lab)
+    # gridsize = 5
+    # clahe = cv2.createCLAHE(clipLimit=2.0,tileGridSize=(gridsize,gridsize))
+    # lab_planes[0] = clahe.apply(lab_planes[0])
+    # lab = cv2.merge(lab_planes)
+    # im = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
     # im = cv2.normalize(im,  im, 0, 255, cv2.NORM_MINMAX)
 
     color_im = im
@@ -48,7 +74,7 @@ while(True):
     frame = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
     im = frame
 
-    x = 100
+    x = 120
     y = 100
     w = 300
     h = 200
@@ -95,7 +121,7 @@ while(True):
     show = color_im[y:y+h, x:x+w]
 
     im_with_keypoints = cv2.drawKeypoints(show, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    # cv2.imshow('frame', im_with_keypoints)
+    cv2.imshow('frame', im_with_keypoints)
 
     im = im_with_keypoints
     
