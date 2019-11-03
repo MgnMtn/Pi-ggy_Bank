@@ -8,14 +8,27 @@ np.random.seed(2)
 path_2p = 'images/2p'
 all_2ps = [ os.path.join(path_2p, f) for f in os.listdir(path_2p) ]
 np.random.shuffle(all_2ps)
-train_2ps = all_2ps[30:]
-test_2p = all_2ps[:30]
+train_2ps = all_2ps[5:]
+test_2p = all_2ps[:5]
 
 path_2pounds = 'images/2pound'
 all_2pounds = [ os.path.join(path_2pounds, f) for f in os.listdir(path_2pounds) ]
 np.random.shuffle(all_2pounds)
-train_2pounds = all_2pounds[20:]
-test_2pounds = all_2pounds[:20]
+train_2pounds = all_2pounds[5:]
+test_2pounds = all_2pounds[:5]
+
+path_10p = 'images/10p'
+all_10ps = [ os.path.join(path_10p, f) for f in os.listdir(path_10p) ]
+np.random.shuffle(all_10ps)
+train_10ps = all_10ps[5:]
+test_10p = all_10ps[:5]
+
+path_50p = 'images/50p'
+all_50ps = [ os.path.join(path_50p, f) for f in os.listdir(path_50p) ]
+np.random.shuffle(all_50ps)
+train_50ps = all_50ps[5:]
+test_50p = all_50ps[:5]
+
 
 def get_features(image_src):
     if type(image_src) is str:
@@ -65,11 +78,18 @@ from sklearn import svm
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-clf = svm.SVC()
+clf = svm.SVC(gamma='scale')
+data = np.vstack((
+    [ np.append(get_features(f), 0) for f in all_2ps ],
+    [ np.append(get_features(f), 1) for f in all_10ps ],
+    [ np.append(get_features(f), 2) for f in all_50ps ],
+    [ np.append(get_features(f), 3) for f in all_2pounds ],
+))
+
 # clf = RandomForestClassifier()
 # clf = MLPClassifier()
 # clf = svm()
-clf.fit(X, y)  
+clf.fit(data[:, :-1], data[:, -1])  
 
 def predict(img):
     feats = get_features(img)
@@ -78,7 +98,11 @@ def predict(img):
     if label == 0:
         return '2p'
     elif label == 1:
-        return '2pound'
+        return '10p'
+    elif label == 2:
+        return '50p'
+    elif label == 3:
+        return '2 pounds'
 
 
 def loo(data):
@@ -95,21 +119,17 @@ def loo(data):
         clf.fit(train[:, :-1], train[:, -1])
 
         guess = clf.predict([test[:-1]])
-        print(guess, test[-1])
         correct += test[-1] == guess
     
-    print('Correct: ', correct)
-    return correct / n_samples
+    return (correct / n_samples)[0]
 
 # print(all_2ps[0], all_2pounds[0])
 
-data = np.vstack((
-    [ np.append(get_features(f), 0) for f in all_2ps ],
-    [ np.append(get_features(f), 1) for f in all_2pounds ]
-))
+if __name__ == "__main__":
+    
 
-np.random.shuffle(data)
-print(loo(data))
+    np.random.shuffle(data)
+    print(loo(data))
 
 # # print(clf.predict(test))
 # test = np.array([ get_features(f) for f in test_2pounds ])

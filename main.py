@@ -3,32 +3,51 @@ import cv2
 
 from classification import predict
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 import random
 
 count = float('inf')
 file = open('file.txt', 'w+')
 
+def format_money(pennies):
+    pounds = pennies // 100
+    pennies = pennies - (pounds * 100)
+
+    return str(pounds) + '.' + str(round(pennies, 2)) + 'GBP'
+
+def amount(label):
+    if label == '2p':
+        return 2
+    elif label == '10p':
+        return 10
+    elif label == '50p':
+        return 50
+    elif label == '2 pounds':
+        return 200
+
+
 def mode(list):
 
-    twop = 0
-    twopound = 0
+    # twop = 0
+    # twopound = 0
 
-    for item in list:
-        if item == '2p':
-            twop += 1
-        else:
-            twopound += 1
+    # for item in list:
+    #     if item == '2p':
+    #         twop += 1
+    #     else:
+    #         twopound += 1
     
-    total = twop + twopound
+    # total = twop + twopound
 
-    if (twopound/total) > 0.35:
-        return '2pound'
-    else:
-        return '2p'
+    # if (twopound/total) > 0.35:
+    #     return '2pound'
+    # else:
+    #     return '2p'
 
-    return max(set(list), key=list.count)
+    label = max(set(list), key=list.count)
+    return label
+
 
 def save_keypoints(keypoints, frame):
 
@@ -45,8 +64,8 @@ def save_keypoints(keypoints, frame):
 
         # cv2.imwrite('images/%s.png' % (random.getrandbits(128)), frame)
 
-
-        if frame.shape[0]:
+        print(frame.shape)
+        if all(frame.shape):
             decisions.append(predict(frame))
     print(decisions)
 
@@ -54,7 +73,7 @@ def save_keypoints(keypoints, frame):
     # print(mode(decisions))
 
         # print(predict(frame))
-
+total = 0
 while(True):
     # Capture frame-by-frame
     ret, im = cap.read()
@@ -121,6 +140,22 @@ while(True):
     show = color_im[y:y+h, x:x+w]
 
     im_with_keypoints = cv2.drawKeypoints(show, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    old_h, old_w = im_with_keypoints.shape[:-1]
+    im_with_keypoints = cv2.resize(im_with_keypoints, (old_w*3, old_h*3))
+
+    font                   = cv2.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (20, 50)
+    fontScale              = 1
+    fontColor              = (255,255,255)
+    lineType               = 2
+
+    cv2.putText(im_with_keypoints, format_money(total), 
+        bottomLeftCornerOfText, 
+        font, 
+        fontScale,
+        fontColor,
+        lineType)
+    
     cv2.imshow('frame', im_with_keypoints)
 
     im = im_with_keypoints
@@ -130,7 +165,7 @@ while(True):
     # Display the resulting frame
     key = cv2.waitKey(1)
 
-    if key == 32:
+    if key == 32 or (len(keypoints) > 0 and count > 20):
         count = 0
         decisions = []
 
@@ -141,12 +176,18 @@ while(True):
         decisions += save_keypoints(keypoints, color_im)
     
     if count == 20:
-        print('Final: ', mode(decisions))
+        print(len(decisions))
+        if len(decisions) > 10:
+            print('Final: ', mode(decisions))
+            total += amount(mode(decisions))
 
         # color_im = color_im[y:y+h, x:x+w]
         # im_with_keypoints = cv2.drawKeypoints(color_im, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         # cv2.imwrite('frame%d.png' % count, im_with_keypoints)
+
+    if key == 13:
+        total = 0
 
 
     count += 1
